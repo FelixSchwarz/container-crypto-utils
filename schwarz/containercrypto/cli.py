@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """crypted-container-ctl
 
 This script can "unlock" an encrypted container file and mount it with
