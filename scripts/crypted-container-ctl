@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+
+from schwarz.containercrypto.cli import main
+
+main()
+

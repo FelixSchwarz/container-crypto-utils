@@ -7,6 +7,10 @@ setup(
     version='0.1',
     description='Utilities to mount/unmount encrypted container files.',
     packages=['schwarz.containercrypto'],
+    scripts=[
+        'scripts/crypted-container-ctl',
+    ],
     zip_safe=False,
+    python_requires='>=3.6',
 )
 
