@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+"""crypted-container-ctl
+
+This script can "unlock" an encrypted container file and mount it with
+minimal privileges. The "lock" function removes the mount and locks the
+container again.
+
+Usage:
+  crypted-container-ctl unlock <container_file>
+  crypted-container-ctl lock <mount_dir>
+
+Options:
+  -h --help     Show this screen.
+"""
 
 import os
 from pathlib import Path
@@ -6,19 +19,6 @@ import re
 import subprocess
 import sys
 
-
-def main(argv=sys.argv):
-    command_str = argv[1]
-    assert command_str in ('unlock', 'lock'), command_str
-
-    if command_str == 'unlock':
-        cache_file = argv[2]
-        mount_path = unlock(cache_file)
-        if mount_path:
-            print(mount_path)
-    else:
-        cache_dir = argv[2]
-        tear_down_volume(cache_dir)
 
 def print_error(s):
     if isinstance(s, bytes):
@@ -29,19 +29,56 @@ def print_error(s):
             sys.exit(5)
     sys.stderr.write(s + '\n')
 
+try:
+    from docopt import docopt
+except ImportError:
+    print_error('missing dependency "docopt"')
+    sys.exit(5)
+
+
+__all__ = []
+
+def main(argv=sys.argv):
+    arguments = docopt(__doc__, argv=argv[1:])
+    subcommands = ('lock', 'unlock')
+    command_str = next(cmd for cmd in subcommands if arguments[cmd])
+
+    if command_str == 'unlock':
+        cache_file = Path(arguments['<container_file>'])
+        ensure_path_exists(cache_file, expect_file=True, name='Encrypted container')
+        mount_path = unlock(cache_file)
+        if mount_path:
+            print(mount_path)
+    else:
+        cache_dir = Path(arguments['<mount_dir>'])
+        ensure_path_exists(cache_dir, expect_dir=True, name='Mount directory')
+        tear_down_volume(cache_dir)
+
+
+def ensure_path_exists(path, *, name, expect_file=False, expect_dir=False):
+    if not path.exists():
+        print_error('%s does not exist: "%s"' % (name, path))
+    elif expect_file and not path.is_file():
+        print_error('%s is not a file: "%s"' % (name, path))
+    elif expect_dir and not path.is_dir():
+        print_error('%s is not a directory: "%s"' % (name, path))
+    else:
+        return
+    sys.exit(5)
+
+
 # "…(\S+?)\.?" so we can match
 #   Error unlocking /dev/loop0: …: Device … is already unlocked as /dev/dm-4
 udisksctl_as = re.compile(b' as (\S+?)\.?$')
 
 def unlock(cache_volume_img):
-    p = Path(cache_volume_img)
-    if not p.exists() or not p.is_file():
+    if not cache_volume_img.exists() or not cache_volume_img.is_file():
         print_error('"%s" does not exist or is not a file' % cache_volume_img)
         return
 
     disk_id = get_disk_id()
 
-    loop_setup_cmd = ['udisksctl', 'loop-setup', '--file='+cache_volume_img, '--no-user-interaction']
+    loop_setup_cmd = ['udisksctl', 'loop-setup', '--file=%s' % cache_volume_img, '--no-user-interaction']
     dev_loop = _run_cmd(loop_setup_cmd, regex=udisksctl_as)
    
     path_keyfile = Path('~/.config/borg/borg.cache-%s.key' % (disk_id, )).expanduser()

@@ -10,6 +10,9 @@ setup(
     scripts=[
         'scripts/crypted-container-ctl',
     ],
+    install_requires=(
+        'docopt',
+    ),
     zip_safe=False,
     python_requires='>=3.6',
 )
