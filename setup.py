@@ -14,6 +14,9 @@ setup(
     install_requires=(
         'docopt',
     ),
+    tests_require=(
+        'PythonicTestcase',
+    ),
     zip_safe=False,
     python_requires='>=3.6',
 )
