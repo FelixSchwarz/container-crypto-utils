@@ -1,4 +1,5 @@
 
+from pathlib import Path
 import re
 import subprocess
 import sys
@@ -18,7 +19,8 @@ def find_luks_path_for_mount_dir(mount_dir, *, _cmd_output:bytes=None):
         assert isinstance(_cmd_output, bytes)
         stdout = _cmd_output
         stderr = None
-    mount_pattern = r'^(/dev/mapper/luks\-.+?)\s+on\s+%s\s+type' % re.escape(mount_dir)
+    dir_str = Path(mount_dir).absolute().as_posix()
+    mount_pattern = r'^(/dev/mapper/luks\-.+?)\s+on\s+%s\s+type' % re.escape(dir_str)
     mount_regex = re.compile(mount_pattern.encode('utf8'), re.MULTILINE)
     luks_path = extract_pattern_from_output(stdout, regex=mount_regex, stderr=stderr)
     return luks_path

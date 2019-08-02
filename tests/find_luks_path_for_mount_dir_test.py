@@ -1,13 +1,17 @@
 
+from pathlib import Path
 import textwrap
 
+from ddt import data as ddt_data, ddt as DataDrivenTestCase
 from pythonic_testcase import *
 
 from schwarz.containercrypto.system_commands import find_luks_path_for_mount_dir
 
 
+@DataDrivenTestCase
 class FindLUKSPathForMountDirTest(PythonicTestCase):
-    def test_can_find_luks_path(self):
+    @ddt_data(True, False)
+    def test_can_find_luks_path(self, use_path):
         mount_dir = '/run/media/user/9f4da36d-beab-4318-b849-24d6d5720496'
         luks_path = '/dev/mapper/luks-ac892918-d26d-4bf7-a03c-78af9f70b6f4'
         mount_output = f'''
@@ -35,7 +39,8 @@ class FindLUKSPathForMountDirTest(PythonicTestCase):
             {luks_path} on {mount_dir} type ext4 (rw,nosuid,nodev,relatime,seclabel,uhelper=udisks2)
             /dev/fuse on /run/user/1234/doc type fuse (rw,nosuid,nodev,relatime,user_id=1234,group_id=1234)
         '''
-        assert_equals(luks_path, _find_luks_path(mount_dir, mount_output))
+        mount_path = Path(mount_dir) if use_path else mount_dir
+        assert_equals(luks_path, _find_luks_path(mount_path, mount_output))
 
 
 def _find_luks_path(mount_dir, mount_output):
