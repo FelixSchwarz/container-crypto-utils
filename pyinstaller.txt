@@ -1,0 +1,10 @@
+
+You can use pyinstaller to create a single-file executable of this project.
+
+## create executable
+$ pyinstaller crypted-container-ctl.spec
+
+## Initial setup
+$ pip install pyinstaller
+$ pyinstaller --onefile --hidden-import=docopt scripts/crypted-container-ctl
+
