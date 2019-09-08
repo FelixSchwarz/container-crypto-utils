@@ -21,7 +21,7 @@ import sys
 
 
 from .user_feedback import print_error
-from .system_commands import find_luks_path_for_mount_dir, run_cmd
+from .system_commands import *
 
 try:
     from docopt import docopt
@@ -85,11 +85,7 @@ def unlock(cache_volume_img):
         sys.exit(11)
     unlock_cmd = ['udisksctl', 'unlock', '--block-device='+dev_loop, '--key-file', path_keyfile, '--no-user-interaction']
     dev_dm = run_cmd(unlock_cmd, expected=(0, 1), regex=udisksctl_as)
-
-    mount_cmd = ['udisksctl', 'mount', '--block-device='+dev_dm, '--no-user-interaction']
-    udisksctl_at = re.compile(b' at (\S+?)\.?$')
-    #   b'Mounted /dev/… at /run/media/….\n'
-    mount_path = run_cmd(mount_cmd, regex=udisksctl_at)
+    mount_path = mount(dev_dm)
     return mount_path
 
 
@@ -104,12 +100,9 @@ def tear_down_volume(cache_dir):
     loop_name = run_cmd(info_cmd, regex=info_regex)
     dev_loop = '/dev/' + loop_name
 
-    unmount_cmd = ['udisksctl', 'unmount', '--block-device='+luks_path, '--no-user-interaction']
-    _run_cmd(unmount_cmd)
-    lock_cmd = ['udisksctl', 'lock', '--block-device='+dev_loop, '--no-user-interaction']
-    _run_cmd(lock_cmd)
-    loop_delete_cmd = ['udisksctl', 'loop-delete', '--block-device='+dev_loop, '--no-user-interaction']
-    _run_cmd(loop_delete_cmd)
+    unmount(luks_path)
+    lock_loop_device(dev_loop)
+    delete_loop_device(dev_loop)
 
 
 def get_disk_id():

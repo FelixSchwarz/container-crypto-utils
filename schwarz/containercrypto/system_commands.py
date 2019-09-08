@@ -7,8 +7,12 @@ import sys
 from .user_feedback import print_error
 
 __all__ = [
+    'delete_loop_device',
     'find_luks_path_for_mount_dir',
+    'lock_loop_device',
+    'mount',
     'run_cmd',
+    'unmount',
 ]
 
 def find_luks_path_for_mount_dir(mount_dir, *, _cmd_output:bytes=None):
@@ -24,6 +28,57 @@ def find_luks_path_for_mount_dir(mount_dir, *, _cmd_output:bytes=None):
     mount_regex = re.compile(mount_pattern.encode('utf8'), re.MULTILINE)
     luks_path = extract_pattern_from_output(stdout, regex=mount_regex, stderr=stderr)
     return luks_path
+
+
+def mount(dev_dm, *, _cmd_output:bytes=None):
+    dev_str = Path(dev_dm).absolute().as_posix()
+    mount_cmd = ['udisksctl', 'mount', '--block-device='+dev_str, '--no-user-interaction']
+    #   b'Mounted /dev/… at /run/media/….\n'
+    if _cmd_output is None:
+        # exit code 1: "... already mounted at ..."
+        stdout, stderr = _run_cmd(mount_cmd, expected=(0, 1))
+    else:
+        assert isinstance(_cmd_output, bytes)
+        stdout = _cmd_output
+        stderr = None
+    udisksctl_at = re.compile(b" at `?(\S+?)'?\.?$")
+    mount_path = extract_pattern_from_output(stdout, regex=udisksctl_at, stderr=stderr)
+    return mount_path
+
+
+def unmount(luks_path, *, _cmd_output:bytes=None):
+    path_str = Path(luks_path).absolute().as_posix()
+    unmount_cmd = ['udisksctl', 'unmount', '--block-device='+path_str, '--no-user-interaction']
+    if _cmd_output is None:
+        stdout, stderr = _run_cmd(unmount_cmd)
+    else:
+        assert isinstance(_cmd_output, bytes)
+        stdout = _cmd_output
+        stderr = None
+    unmount_pattern = '^Unmounted (/dev/.+)\.'
+    unmount_regex = re.compile(unmount_pattern.encode('utf8'))
+    luks_dev = extract_pattern_from_output(stdout, regex=unmount_regex, stderr=stderr)
+    return luks_dev
+
+
+def lock_loop_device(loop_path, *, _cmd_output:bytes=None):
+    dev_loop = Path(loop_path).absolute().as_posix()
+    lock_cmd = ['udisksctl', 'lock', '--block-device='+dev_loop, '--no-user-interaction']
+    if _cmd_output is None:
+        stdout, stderr = _run_cmd(lock_cmd)
+    else:
+        assert isinstance(_cmd_output, bytes)
+        stdout = _cmd_output
+        stderr = None
+    lock_pattern = '^Locked (/dev/.+)\.'
+    lock_regex = re.compile(lock_pattern.encode('utf8'))
+    locked_dev = extract_pattern_from_output(stdout, regex=lock_regex, stderr=stderr)
+
+
+def delete_loop_device(loop_path):
+    dev_loop = Path(loop_path).absolute().as_posix()
+    lock_cmd = ['udisksctl', 'loop-delete', '--block-device='+dev_loop, '--no-user-interaction']
+    stdout, stderr = _run_cmd(lock_cmd)
 
 
 def _run_cmd(cmd, *, expected=None):
