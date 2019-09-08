@@ -12,7 +12,11 @@ a = Analysis(['scripts/crypted-container-ctl'],
              pathex=[SRC_PATH],
              binaries=[],
              datas=[],
-             hiddenimports=['docopt'],
+             hiddenimports=[
+                 'docopt',
+                 # pkg_resources-based namespace package
+                 'setuptools'
+             ],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
