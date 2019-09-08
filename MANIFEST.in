@@ -1,1 +1,10 @@
+include dev_requirements.txt
+include setup.cfg
 include LICENSE.txt
+include VERSION.txt
+
+# --- pyinstaller ---
+include create-executable.sh
+include crypted-container-ctl.spec
+incluse pyinstaller.txt
+
