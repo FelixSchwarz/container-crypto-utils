@@ -8,10 +8,15 @@ block_cipher = None
 from pathlib import Path
 SRC_PATH = Path(SPECPATH).absolute().as_posix()
 
+from PyInstaller.utils.hooks import copy_metadata
+
+
 a = Analysis(['scripts/crypted-container-ctl'],
              pathex=[SRC_PATH],
              binaries=[],
-             datas=[],
+             datas=[
+                *copy_metadata('ContainerCryptoUtils'),
+             ],
              hiddenimports=[
                  'docopt',
                  # pkg_resources-based namespace package
