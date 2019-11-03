@@ -9,6 +9,7 @@ container again.
 Usage:
   crypted-container-ctl unlock <container_file>
   crypted-container-ctl lock <mount_dir>
+  crypted-container-ctl --version
 
 Options:
   -h --help     Show this screen.
@@ -19,6 +20,7 @@ from pathlib import Path
 import re
 import sys
 
+import pkg_resources
 
 from .user_feedback import print_error
 from .system_commands import *
@@ -34,6 +36,11 @@ __all__ = []
 
 def main(argv=sys.argv):
     arguments = docopt(__doc__, argv=argv[1:])
+    show_version = arguments['--version']
+    if show_version:
+        app_dist = pkg_resources.get_distribution('ContainerCryptoUtils')
+        print(app_dist.version)
+        return
     subcommands = ('lock', 'unlock')
     command_str = next(cmd for cmd in subcommands if arguments[cmd])
 
