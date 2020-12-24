@@ -82,14 +82,14 @@ def unlock(cache_volume_img):
         return
 
     disk_id = get_disk_id()
-
-    loop_setup_cmd = ['udisksctl', 'loop-setup', '--file=%s' % cache_volume_img, '--no-user-interaction']
-    dev_loop = run_cmd(loop_setup_cmd, regex=udisksctl_as)
-   
     path_keyfile = Path('~/.config/borg/borg.cache-%s.key' % (disk_id, )).expanduser()
     if not path_keyfile.exists():
         sys.stderr.write('borg key for disk %s does not exist.\n' % disk_id)
         sys.exit(11)
+
+    loop_setup_cmd = ['udisksctl', 'loop-setup', '--file=%s' % cache_volume_img, '--no-user-interaction']
+    dev_loop = run_cmd(loop_setup_cmd, regex=udisksctl_as)
+
     unlock_cmd = ['udisksctl', 'unlock', '--block-device='+dev_loop, '--key-file', path_keyfile, '--no-user-interaction']
     dev_dm = run_cmd(unlock_cmd, expected=(0, 1), regex=udisksctl_as)
     mount_path = mount(dev_dm)
