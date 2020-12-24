@@ -82,8 +82,8 @@ def unlock(cache_volume_img):
         return
 
     disk_id = get_disk_id()
-    path_keyfile = Path('~/.config/borg/borg.cache-%s.key' % (disk_id, )).expanduser()
-    if not path_keyfile.exists():
+    path_keyfile = find_keyfile(disk_id)
+    if not path_keyfile:
         sys.stderr.write('borg key for disk %s does not exist.\n' % disk_id)
         sys.exit(11)
 
@@ -94,6 +94,23 @@ def unlock(cache_volume_img):
     dev_dm = run_cmd(unlock_cmd, expected=(0, 1), regex=udisksctl_as)
     mount_path = mount(dev_dm)
     return mount_path
+
+
+def find_keyfile(disk_id):
+    disk_key = f'.config/borg/borg.cache-{disk_id}.key'
+
+    home_path = Path('~').expanduser()
+    key_path = home_path / disk_key
+    if key_path.exists():
+        return key_path
+
+    os_username = os.getenv('SUDO_USER')
+    if os_username:
+        os_username_home = Path(f'~{os_username}').expanduser()
+        key_path = os_username_home / disk_key
+        if key_path.exists():
+            return key_path
+    return None
 
 
 def tear_down_volume(cache_dir):
