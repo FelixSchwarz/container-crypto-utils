@@ -73,6 +73,7 @@ def lock_loop_device(loop_path, *, _cmd_output:bytes=None):
     lock_pattern = '^Locked (/dev/.+)\.'
     lock_regex = re.compile(lock_pattern.encode('utf8'))
     locked_dev = extract_pattern_from_output(stdout, regex=lock_regex, stderr=stderr)
+    assert locked_dev is not None
 
 
 def delete_loop_device(loop_path):
@@ -104,6 +105,7 @@ def extract_pattern_from_output(stdout, *, regex, stderr=None):
         print_error(stdout)
         if stderr:
             print_error(stderr)
+        return None
     target_location = match.group(1).decode('ascii')
     return target_location
 

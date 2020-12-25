@@ -1,6 +1,7 @@
 
 from pathlib import Path
 import textwrap
+from unittest import mock
 
 from ddt import data as ddt_data, ddt as DataDrivenTestCase
 from pythonic_testcase import *
@@ -41,6 +42,15 @@ class FindLUKSPathForMountDirTest(PythonicTestCase):
         '''
         mount_path = Path(mount_dir) if use_path else mount_dir
         assert_equals(luks_path, _find_luks_path(mount_path, mount_output))
+
+    def test_can_handle_non_mounted_dir(self):
+        mount_path = Path('/run/media/user/9f4da36d-beab-4318-b849-24d6d5720496/subdir')
+        mount_output = f'''
+            sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,relatime,seclabel)
+            proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)
+        '''
+        with mock.patch('schwarz.containercrypto.system_commands.print_error', new=lambda s: None):
+            assert_none(_find_luks_path(mount_path, mount_output))
 
 
 def _find_luks_path(mount_dir, mount_output):
