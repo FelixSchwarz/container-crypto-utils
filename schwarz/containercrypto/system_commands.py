@@ -100,8 +100,6 @@ def _run_cmd(cmd, *, expected=None):
 def extract_pattern_from_output(stdout, *, regex, stderr=None):
     match = regex.search(stdout)
     if match is None:
-        if regex is None:
-            return None
         print_error(stdout)
         if stderr:
             print_error(stderr)
