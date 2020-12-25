@@ -7,8 +7,8 @@ minimal privileges. The "lock" function removes the mount and locks the
 container again.
 
 Usage:
-  crypted-container-ctl unlock <container_file>
-  crypted-container-ctl lock <mount_dir>
+  crypted-container-ctl [--verbose] unlock <container_file>
+  crypted-container-ctl [--verbose] lock <mount_dir>
   crypted-container-ctl --version
 
 Options:
@@ -36,6 +36,7 @@ __all__ = []
 
 def main(argv=sys.argv):
     arguments = docopt(__doc__, argv=argv[1:])
+    verbose = arguments['--verbose']
     show_version = arguments['--version']
     if show_version:
         app_dist = pkg_resources.get_distribution('ContainerCryptoUtils')
@@ -53,7 +54,7 @@ def main(argv=sys.argv):
     else:
         cache_dir = Path(arguments['<mount_dir>'])
         ensure_path_exists(cache_dir, expect_dir=True, name='Mount directory')
-        tear_down_volume(cache_dir)
+        tear_down_volume(cache_dir, verbose=verbose)
 
 
 def ensure_path_exists(path, *, name, expect_file=False, expect_dir=False):
@@ -113,8 +114,8 @@ def find_keyfile(disk_id):
     return None
 
 
-def tear_down_volume(cache_dir):
-    luks_path = find_luks_path_for_mount_dir(cache_dir)
+def tear_down_volume(cache_dir, *, verbose=False):
+    luks_path = find_luks_path_for_mount_dir(cache_dir, verbose=verbose)
     if luks_path is None:
         print_error('no mount found for cache dir "%s"' % cache_dir)
         return

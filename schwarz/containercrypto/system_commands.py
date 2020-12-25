@@ -15,7 +15,7 @@ __all__ = [
     'unmount',
 ]
 
-def find_luks_path_for_mount_dir(mount_dir, *, _cmd_output:bytes=None):
+def find_luks_path_for_mount_dir(mount_dir, *, _cmd_output:bytes=None, verbose=False):
     mount_cmd = ['mount']
     if _cmd_output is None:
         stdout, stderr = _run_cmd(mount_cmd)
@@ -26,11 +26,11 @@ def find_luks_path_for_mount_dir(mount_dir, *, _cmd_output:bytes=None):
     dir_str = Path(mount_dir).absolute().as_posix()
     mount_pattern = r'^(/dev/mapper/luks\-.+?)\s+on\s+%s\s+type' % re.escape(dir_str)
     mount_regex = re.compile(mount_pattern.encode('utf8'), re.MULTILINE)
-    luks_path = extract_pattern_from_output(stdout, regex=mount_regex, stderr=stderr)
+    luks_path = extract_pattern_from_output(stdout, regex=mount_regex, stderr=stderr, print_errors=verbose)
     return luks_path
 
 
-def mount(dev_dm, *, _cmd_output:bytes=None):
+def mount(dev_dm, *, _cmd_output:bytes=None, verbose=False):
     dev_str = Path(dev_dm).absolute().as_posix()
     mount_cmd = ['udisksctl', 'mount', '--block-device='+dev_str, '--no-user-interaction']
     #   b'Mounted /dev/… at /run/media/….\n'
@@ -97,12 +97,13 @@ def _run_cmd(cmd, *, expected=None):
         sys.exit(exit_code)
     return stdout, stderr
 
-def extract_pattern_from_output(stdout, *, regex, stderr=None):
+def extract_pattern_from_output(stdout, *, regex, stderr=None, print_errors=False):
     match = regex.search(stdout)
     if match is None:
-        print_error(stdout)
-        if stderr:
-            print_error(stderr)
+        if print_errors:
+            print_error(stdout)
+            if stderr:
+                print_error(stderr)
         return None
     target_location = match.group(1).decode('ascii')
     return target_location

@@ -1,7 +1,6 @@
 
 from pathlib import Path
 import textwrap
-from unittest import mock
 
 from ddt import data as ddt_data, ddt as DataDrivenTestCase
 from pythonic_testcase import *
@@ -49,15 +48,14 @@ class FindLUKSPathForMountDirTest(PythonicTestCase):
             sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,relatime,seclabel)
             proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)
         '''
-        with mock.patch('schwarz.containercrypto.system_commands.print_error', new=lambda s: None):
-            assert_none(_find_luks_path(mount_path, mount_output))
+        assert_none(_find_luks_path(mount_path, mount_output, verbose=False))
 
 
-def _find_luks_path(mount_dir, mount_output):
+def _find_luks_path(mount_dir, mount_output, *, verbose=False):
     if isinstance(mount_output, bytes):
         output_bytes = mount_output
     else:
         mount_output = textwrap.dedent(mount_output).strip()
         output_bytes = mount_output.encode('ASCII')
-    return find_luks_path_for_mount_dir(mount_dir, _cmd_output=output_bytes)
+    return find_luks_path_for_mount_dir(mount_dir, _cmd_output=output_bytes, verbose=verbose)
 
