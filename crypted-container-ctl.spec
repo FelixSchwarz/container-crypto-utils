@@ -19,8 +19,6 @@ a = Analysis(['scripts/crypted-container-ctl'],
              ],
              hiddenimports=[
                  'docopt',
-                 # pkg_resources-based namespace package
-                 'setuptools'
              ],
              hookspath=[],
              runtime_hooks=[],

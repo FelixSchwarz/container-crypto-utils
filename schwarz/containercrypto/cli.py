@@ -15,12 +15,15 @@ Options:
   -h --help     Show this screen.
 """
 
+try:
+    from importlib.metadata import version
+except ImportError:
+    # Python <= 3.7
+    from importlib_metadata import version
 import os
 from pathlib import Path
 import re
 import sys
-
-import pkg_resources
 
 from .user_feedback import print_error
 from .system_commands import *
@@ -39,8 +42,8 @@ def main(argv=sys.argv):
     verbose = arguments['--verbose']
     show_version = arguments['--version']
     if show_version:
-        app_dist = pkg_resources.get_distribution('ContainerCryptoUtils')
-        print(app_dist.version)
+        app_version = version('ContainerCryptoUtils')
+        print(app_version)
         return
     subcommands = ('lock', 'unlock')
     command_str = next(cmd for cmd in subcommands if arguments[cmd])
