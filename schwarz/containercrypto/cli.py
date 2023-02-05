@@ -76,9 +76,6 @@ def ensure_path_exists(path, *, name, expect_file=False, expect_dir=False):
 #   Error unlocking /dev/loop0: …: Device … is already unlocked as /dev/dm-4
 udisksctl_as = re.compile(b' as (\S+?)\.?$')
 
-def _run_cmd(cmd, regex=None, expected=None):
-    return run_cmd(cmd, regex=(regex or udisksctl_as), expected=expected)
-
 
 def unlock(cache_volume_img):
     if not cache_volume_img.exists() or not cache_volume_img.is_file():
