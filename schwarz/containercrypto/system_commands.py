@@ -108,7 +108,7 @@ def extract_pattern_from_output(stdout, *, regex, stderr=None, print_errors=Fals
     target_location = match.group(1).decode('ascii')
     return target_location
 
-def run_cmd(cmd, *, regex, expected=None):
+def run_cmd(cmd, *, regex, expected=None) -> str:
     stdout, stderr = _run_cmd(cmd, expected=expected)
     target_location = extract_pattern_from_output(stdout, regex=regex, stderr=stderr)
     return target_location
