@@ -91,10 +91,10 @@ def unlock(cache_volume_img):
         sys.stderr.write('borg key for disk %s does not exist.\n' % disk_id)
         sys.exit(11)
 
-    loop_setup_cmd = ['udisksctl', 'loop-setup', '--file=%s' % cache_volume_img, '--no-user-interaction']
+    loop_setup_cmd = ['/usr/bin/udisksctl', 'loop-setup', '--file=%s' % cache_volume_img, '--no-user-interaction']
     dev_loop = run_cmd(loop_setup_cmd, regex=udisksctl_as)
 
-    unlock_cmd = ['udisksctl', 'unlock', '--block-device='+dev_loop, '--key-file', path_keyfile, '--no-user-interaction']
+    unlock_cmd = ['/usr/bin/udisksctl', 'unlock', '--block-device='+dev_loop, '--key-file', path_keyfile, '--no-user-interaction']
     dev_dm = run_cmd(unlock_cmd, expected=(0, 1), regex=udisksctl_as)
     mount_path = mount(dev_dm)
     return mount_path
@@ -123,7 +123,7 @@ def tear_down_volume(cache_dir, *, verbose=False):
         print_error('no mount found for cache dir "%s"' % cache_dir)
         return
 
-    info_cmd = ['udisksctl', 'info', '--block-device='+luks_path]
+    info_cmd = ['/usr/bin/udisksctl', 'info', '--block-device='+luks_path]
     info_regex = re.compile(b"CryptoBackingDevice:\s+'/org/freedesktop/UDisks2/block_devices/(.+?)'")
     loop_name = run_cmd(info_cmd, regex=info_regex)
     dev_loop = '/dev/' + loop_name

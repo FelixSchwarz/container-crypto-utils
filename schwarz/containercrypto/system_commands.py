@@ -16,7 +16,7 @@ __all__ = [
 ]
 
 def find_luks_path_for_mount_dir(mount_dir, *, _cmd_output:bytes=None, verbose=False):
-    mount_cmd = ['mount']
+    mount_cmd = ['/usr/bin/mount']
     if _cmd_output is None:
         stdout, stderr = _run_cmd(mount_cmd)
     else:
@@ -32,7 +32,7 @@ def find_luks_path_for_mount_dir(mount_dir, *, _cmd_output:bytes=None, verbose=F
 
 def mount(dev_dm, *, _cmd_output:bytes=None, verbose=False):
     dev_str = Path(dev_dm).absolute().as_posix()
-    mount_cmd = ['udisksctl', 'mount', '--block-device='+dev_str, '--no-user-interaction']
+    mount_cmd = ['/usr/bin/udisksctl', 'mount', '--block-device='+dev_str, '--no-user-interaction']
     #   b'Mounted /dev/… at /run/media/….\n'
     if _cmd_output is None:
         # exit code 1: "... already mounted at ..."
@@ -48,7 +48,7 @@ def mount(dev_dm, *, _cmd_output:bytes=None, verbose=False):
 
 def unmount(luks_path, *, _cmd_output:bytes=None):
     path_str = Path(luks_path).absolute().as_posix()
-    unmount_cmd = ['udisksctl', 'unmount', '--block-device='+path_str, '--no-user-interaction']
+    unmount_cmd = ['/usr/bin/udisksctl', 'unmount', '--block-device='+path_str, '--no-user-interaction']
     if _cmd_output is None:
         stdout, stderr = _run_cmd(unmount_cmd)
     else:
@@ -63,7 +63,7 @@ def unmount(luks_path, *, _cmd_output:bytes=None):
 
 def lock_loop_device(loop_path, *, _cmd_output:bytes=None):
     dev_loop = Path(loop_path).absolute().as_posix()
-    lock_cmd = ['udisksctl', 'lock', '--block-device='+dev_loop, '--no-user-interaction']
+    lock_cmd = ['/usr/bin/udisksctl', 'lock', '--block-device='+dev_loop, '--no-user-interaction']
     if _cmd_output is None:
         stdout, stderr = _run_cmd(lock_cmd)
     else:
@@ -78,7 +78,7 @@ def lock_loop_device(loop_path, *, _cmd_output:bytes=None):
 
 def delete_loop_device(loop_path):
     dev_loop = Path(loop_path).absolute().as_posix()
-    lock_cmd = ['udisksctl', 'loop-delete', '--block-device='+dev_loop, '--no-user-interaction']
+    lock_cmd = ['/usr/bin/udisksctl', 'loop-delete', '--block-device='+dev_loop, '--no-user-interaction']
     stdout, stderr = _run_cmd(lock_cmd)
 
 
