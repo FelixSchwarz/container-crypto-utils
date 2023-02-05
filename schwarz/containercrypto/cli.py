@@ -85,7 +85,7 @@ def unlock(cache_volume_img):
         print_error('"%s" does not exist or is not a file' % cache_volume_img)
         return
 
-    disk_id = get_disk_id()
+    disk_id = get_disk_id(cache_volume_img)
     path_keyfile = find_keyfile(disk_id)
     if not path_keyfile:
         sys.stderr.write('borg key for disk %s does not exist.\n' % disk_id)
@@ -133,18 +133,28 @@ def tear_down_volume(cache_dir, *, verbose=False):
     delete_loop_device(dev_loop)
 
 
-def get_disk_id():
-    paths = (
-        Path(os.getcwd()),
-        Path(__file__).parent,
-    )
-    extension = '.DISK'
-    for path in paths:
-        disk_paths = tuple(path.glob('*' + extension))
-        if disk_paths:
-            disk_file = disk_paths[0].name
-            return disk_file[:-len(extension)]
+def get_disk_id(img_path=None):
+    for path in [Path(os.getcwd()), Path(__file__).parent]:
+        disk_id = _disk_id_from_directory(path)
+        if disk_id:
+            return disk_id
+
+    if img_path:
+        path = img_path.absolute().parent
+        while str(path) != '/':
+            disk_id = _disk_id_from_directory(path)
+            if disk_id:
+                return disk_id
+            path = path.parent
     raise ValueError('no disk ID found')
+
+def _disk_id_from_directory(path):
+    extension = '.DISK'
+    disk_paths = tuple(path.glob('*' + extension))
+    if not disk_paths:
+        return None
+    disk_file = disk_paths[0].name
+    return disk_file[:-len(extension)]
 
 
 if __name__ == '__main__':
