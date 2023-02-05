@@ -41,7 +41,7 @@ def mount(dev_dm, *, _cmd_output:bytes=None, verbose=False):
         assert isinstance(_cmd_output, bytes)
         stdout = _cmd_output
         stderr = None
-    udisksctl_at = re.compile(b" at `?(\S+?)'?\.?$")
+    udisksctl_at = re.compile(br" at `?(\S+?)'?\.?$")
     mount_path = extract_pattern_from_output(stdout, regex=udisksctl_at, stderr=stderr)
     return mount_path
 
@@ -55,7 +55,7 @@ def unmount(luks_path, *, _cmd_output:bytes=None):
         assert isinstance(_cmd_output, bytes)
         stdout = _cmd_output
         stderr = None
-    unmount_pattern = '^Unmounted (/dev/.+)\.'
+    unmount_pattern = r'^Unmounted (/dev/.+)\.'
     unmount_regex = re.compile(unmount_pattern.encode('utf8'))
     luks_dev = extract_pattern_from_output(stdout, regex=unmount_regex, stderr=stderr)
     return luks_dev
@@ -70,7 +70,7 @@ def lock_loop_device(loop_path, *, _cmd_output:bytes=None):
         assert isinstance(_cmd_output, bytes)
         stdout = _cmd_output
         stderr = None
-    lock_pattern = '^Locked (/dev/.+)\.'
+    lock_pattern = r'^Locked (/dev/.+)\.'
     lock_regex = re.compile(lock_pattern.encode('utf8'))
     locked_dev = extract_pattern_from_output(stdout, regex=lock_regex, stderr=stderr)
     assert locked_dev is not None
