@@ -9,7 +9,7 @@ container again.
 Usage:
   crypted-container-ctl [--verbose] unlock <container_file>
   crypted-container-ctl [--verbose] lock <mount_dir>
-  crypted-container-ctl [--verbose] init <container_file>
+  crypted-container-ctl [--verbose] init [--size=<GB>] <container_file>
   crypted-container-ctl --version
 
 Options:
@@ -27,6 +27,9 @@ from pwd import getpwnam
 import re
 import shlex
 import sys
+from typing import Optional
+
+import bitmath
 
 from .user_feedback import print_error
 from .system_commands import _run_cmd
@@ -41,7 +44,7 @@ except ImportError:
 
 __all__ = []
 
-KEY_SIZE = 512
+KEY_SIZE = bitmath.Bit(512)
 
 def main(argv=sys.argv):
     arguments = docopt(__doc__, argv=argv[1:])
@@ -73,10 +76,25 @@ def main(argv=sys.argv):
             sys.exit(9)
 
         path_container = Path(arguments['<container_file>'])
-        init_container(path_container, verbose=verbose)
+        size = parse_size(arguments['--size'], default=bitmath.GiB(20))
+        init_container(path_container, size, verbose=verbose)
     else:
         raise ValueError(f'unexpected subcommand "{command_str}"')
 
+
+def parse_size(size_str, *, default) -> Optional[bitmath.Bitmath]:
+    if not size_str:
+        return default
+    else:
+        try:
+            # As far as I can see from the documentation this function is not
+            # really "unsafe" (i.e. in a security sense) but it just does more
+            # guessing.
+            # system=bitmath.NIST -> assume "5G" means "5 * 1024 MiB"
+            size = bitmath.parse_string_unsafe(size_str, system=bitmath.NIST)
+        except ValueError:
+            return None
+    return size
 
 def ensure_path_exists(path, *, name, expect_file=False, expect_dir=False):
     if not path.exists():
@@ -114,21 +132,21 @@ def unlock(cache_volume_img) -> str:
     return dev_dm
 
 
-def init_container(path_container, *, verbose=False):
+def init_container(path_container, size: bitmath.Bitmath, *, verbose=False):
     if path_container.exists():
         print_error(f'container path already exists: "{path_container}"')
         sys.exit(10)
 
+    key_size_bits = int(KEY_SIZE.to_Bit())
     disk_id = get_disk_id(path_container)
     path_keyfile = find_keyfile(disk_id)
     if not path_keyfile:
         path_keyfile = expected_key_path(disk_id, prefer_sudo=True)
         sys.stderr.write('borg key for disk %s does not exist.\n' % disk_id)
-        sys.stderr.write(f'  create key: dd if=/dev/urandom of="{str(path_keyfile)}" bs=1 count={KEY_SIZE}\n')
+        sys.stderr.write(f'  create key: dd if=/dev/urandom of="{str(path_keyfile)}" bs=1 count={key_size_bits}\n')
         sys.exit(11)
 
-    size_gb = 20
-    size_mb = size_gb * 1024
+    size_mb = int(size.to_MiB())
     cmd_dd_sparse = ['/bin/dd', 'if=/dev/zero', 'of=%s' % path_container, 'bs=1', 'count=0', 'seek=%dM' % size_mb]
     _run_cmd(cmd_dd_sparse)
     os.chmod(path_container, 0o600)
@@ -141,8 +159,11 @@ def init_container(path_container, *, verbose=False):
         os.chown(path_container, sudo_uid, sudo_gid)
 
     if verbose:
-        print(f'Initializing LUKS container at {str(path_container)}. This can take a few seconds...')
-    cmd_luks_format = ['/usr/sbin/cryptsetup', '--batch-mode', '--cipher=aes-xts-plain64', f'--key-size={KEY_SIZE}', f'--key-file={path_keyfile}', 'luksFormat', str(path_container)]
+        # ".3g" -> up to 3 digits after the decimal point but ommit
+        # insignificant trailing zeros
+        size_str = size.to_GiB().format('{value:.3g} {unit}')
+        print(f'Initializing LUKS container at {str(path_container)} ({size_str}). This can take a few seconds...')
+    cmd_luks_format = ['/usr/sbin/cryptsetup', '--batch-mode', '--cipher=aes-xts-plain64', f'--key-size={key_size_bits}', f'--key-file={path_keyfile}', 'luksFormat', str(path_container)]
     _run_cmd(cmd_luks_format)
     dev_dm = unlock(path_container)
     assert dev_dm and Path(dev_dm).is_block_device()
