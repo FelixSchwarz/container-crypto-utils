@@ -6,9 +6,13 @@ for DIR_NAME in build dist; do
     fi
 done
 
-. venv/bin/activate
+if [ ! -e "venv.release" ]; then
+    echo "virtualenv to create release builds not found (directory './venv.release')"
+fi
+. venv.release/bin/activate
+
 # ensure all dependencies are installed
-python3 setup.py develop
+pip install -e .
 pyinstaller crypted-container-ctl.spec
 
 trash build
